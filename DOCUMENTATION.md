@@ -64,7 +64,7 @@
 
 ## 🏗️ Arquitectura del Proyecto
 
-Atlas Mágico sigue una arquitectura **full-stack monolítica** con un servidor Express que sirve tanto la API como la aplicación React.
+Atlas Mágico es una **Single Page Application (SPA) estática** construida con React y Vite, diseñada para ejecutarse íntegramente en el navegador.
 
 ```
 ┌─────────────────────────────────────────────────────┐
@@ -76,22 +76,9 @@ Atlas Mágico sigue una arquitectura **full-stack monolítica** con un servidor 
 │        ↑               ↑               │            │
 │        └───────────────┴───────────────┘            │
 │                   App.tsx (Router)                   │
-│                        │                            │
-│              fetch("/api/quiz", POST)                │
-└────────────────────────┬────────────────────────────┘
-                         │ HTTP
-┌────────────────────────▼────────────────────────────┐
-│                SERVIDOR (Express)                   │
 │                                                     │
 │  ┌──────────────────────────────────────────────┐   │
-│  │            POST /api/quiz                    │   │
-│  │  ┌──────────────┐                             │   │
-│  │  │ Banco Local  │ (questionBank.ts)           │   │
-│  │  └──────────────┘                             │   │
-│  └──────────────────────────────────────────────┘   │
-│                                                     │
-│  ┌──────────────────────────────────────────────┐   │
-│  │  Vite Middleware (dev) / Static Files (prod) │   │
+│  │ Banco de Preguntas Local (questionBank.ts)   │   │
 │  └──────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────┘
 ```
@@ -99,10 +86,9 @@ Atlas Mágico sigue una arquitectura **full-stack monolítica** con un servidor 
 ### Flujo de Datos
 
 1. El **cliente React** maneja el estado del juego localmente en `App.tsx`.
-2. Cuando el jugador inicia un quiz, `QuizScreen` hace un `POST /api/quiz` con `countryId`, `levelId` y `levelIndex`.
-3. El **servidor Express** obtiene una pregunta aleatoria del **Banco de Preguntas local** (`src/questionBank.ts`).
-4. El servidor filtra la última pregunta respondida para evitar repeticiones inmediatas.
-5. La respuesta se envía como JSON con la estructura `QuizQuestion`.
+2. Cuando el jugador inicia un quiz, `QuizScreen` obtiene directamente una pregunta de `src/questionBank.ts`.
+3. El frontend filtra la última pregunta respondida para evitar repeticiones inmediatas.
+4. Toda la lógica se resuelve localmente sin llamadas de red a un backend.
 
 ---
 
@@ -112,10 +98,9 @@ Atlas Mágico sigue una arquitectura **full-stack monolítica** con un servidor 
 atlas-magico/
 ├── .gitignore                  # Archivos ignorados por Git
 ├── index.html                  # Punto de entrada HTML
-├── metadata.json               # Metadatos del proyecto (nombre, descripción, capacidades)
+├── metadata.json               # Metadatos del proyecto
 ├── package.json                # Dependencias y scripts de npm
 ├── package-lock.json           # Lockfile de dependencias
-├── server.ts                   # Servidor Express y API local
 ├── tsconfig.json               # Configuración de TypeScript
 ├── vite.config.ts              # Configuración de Vite + TailwindCSS plugin
 │
@@ -390,50 +375,29 @@ Modal overlay con opciones de configuración del juego.
 
 ---
 
-## 🖥️ Servidor Backend y API
+## 🖥️ Lógica de Trivias
 
-### Archivo: `server.ts`
+El sistema de preguntas de Atlas Mágico funciona completamente del lado del cliente.
 
-El servidor Express maneja dos responsabilidades:
+### Banco de Preguntas Local (`src/questionBank.ts`)
 
-1. **API de quiz** (`POST /api/quiz`)
-2. **Servidor de archivos** (Vite middleware en dev / archivos estáticos en producción)
-
-### Endpoint: `POST /api/quiz`
-
-**Request Body:**
-```json
-{
-  "countryId": "brasil",
-  "levelId": "brasil_1",
-  "levelIndex": 1
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "id": "qb_brasil_1_0",
-  "question": "¿Qué famoso animal con un enorme pico colorido vive en el Amazonas?",
-  "options": ["Pavo Real", "Tucán", "Pingüino"],
-  "correctIndex": 1,
-  "funFact": "¡El tucán usa su pico grande pero ligero para alcanzar frutas...",
-  "mascotHint": "Busca un ave de plumaje negro y un pico anaranjado muy grande..."
-}
-```
-
-### Banco de Preguntas Local
-
-El servidor sirve preguntas predefinidas almacenadas en `src/questionBank.ts`. Contiene:
+El juego incluye preguntas predefinidas que se empaquetan en el bundle estático. El banco contiene:
 - **8 países** × **3 niveles** × **5 preguntas** = 120 preguntas únicas.
 - Cada pregunta incluye `id`, `question`, `options`, `correctIndex`, `funFact` y `mascotHint`.
+
+### Selección de Preguntas (`QuizScreen.tsx`)
+
+1. Al abrir un nivel, se filtra la lista de preguntas disponibles del país y nivel correspondientes.
+2. Se excluye el `lastQuestionId` si existe en el estado local.
+3. Se selecciona aleatoriamente una pregunta.
+4. Se simula una breve carga visual (600ms) para mejorar la inmersión de UX ("El Capitán Patito está pensando").
 
 ### Modos de Ejecución
 
 | Modo | Comportamiento |
 |---|---|
-| **Desarrollo** (`npm run dev`) | Vite middleware con HMR + API Express |
-| **Producción** (`npm start`) | Sirve archivos estáticos desde `dist/` + API Express |
+| **Desarrollo** (`npm run dev`) | Servidor de desarrollo de Vite con HMR |
+| **Producción** (`npm run build`) | Genera archivos estáticos en `dist/` listos para desplegar en cualquier host estático. |
 
 ---
 
@@ -543,10 +507,10 @@ La aplicación estará disponible en `http://localhost:3000`.
 
 | Script | Comando | Descripción |
 |---|---|---|
-| `dev` | `npm run dev` | Inicia el servidor Express con Vite middleware (HMR) via `tsx` |
-| `build` | `npm run build` | Build de producción: Vite (frontend) + esbuild (servidor) |
-| `start` | `npm start` | Inicia el servidor de producción desde `dist/server.cjs` |
-| `clean` | `npm run clean` | Elimina los directorios `dist/` y `server.js` |
+| `dev` | `npm run dev` | Inicia el servidor de desarrollo de Vite con HMR |
+| `build` | `npm run build` | Compila TypeScript y empaqueta el frontend con Vite en `dist/` |
+| `start` | `npm start` | Previsualiza el build de producción localmente |
+| `clean` | `npm run clean` | Elimina el directorio `dist/` |
 | `lint` | `npm run lint` | Chequeo de tipos TypeScript sin emitir archivos |
 
 ---

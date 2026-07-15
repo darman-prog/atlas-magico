@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { QuizQuestion, CountryData, GameState } from "../types";
 import { Star, Trophy, ArrowRight, RefreshCw, Volume2, Sparkles, Brain, Loader2, ShieldAlert } from "lucide-react";
 import { MASCOT_IMAGE } from "../data";
+import { QUESTION_BANK } from "../questionBank";
 
 interface QuizScreenProps {
   country: CountryData;
@@ -32,41 +33,48 @@ export default function QuizScreen({
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch quiz question from the full-stack server
-  const fetchQuestion = async () => {
+  // Fetch quiz question from the local bank
+  const fetchQuestion = () => {
     setLoading(true);
     setError(null);
     setSelectedOption(null);
     setShowExplanation(false);
     setAnsweredCorrectly(null);
     setTimeLeft(20);
-    setIsTicking(true);
+    setIsTicking(false); // Pause ticking while "loading"
 
-    try {
-      const response = await fetch("/api/quiz", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          countryId: country.id,
-          levelId,
-          levelIndex,
-          lastQuestionId
-        })
-      });
+    // Simulate a brief loading delay for UX
+    setTimeout(() => {
+      try {
+        const countryLower = country.id.toLowerCase();
+        const countryQuestions = QUESTION_BANK[countryLower];
+        if (!countryQuestions) {
+          throw new Error(`No hay preguntas para el país: ${country.id}`);
+        }
 
-      if (!response.ok) {
-        throw new Error("Error en el servidor al generar la pregunta.");
+        const levelQuestions = countryQuestions[levelIndex];
+        if (!levelQuestions || levelQuestions.length === 0) {
+          throw new Error(`No hay preguntas para el nivel: ${levelIndex}`);
+        }
+
+        let availableQuestions = levelQuestions;
+        if (lastQuestionId && levelQuestions.length > 1) {
+          availableQuestions = levelQuestions.filter(q => q.id !== lastQuestionId);
+        }
+
+        const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+        const selectedQuestion = availableQuestions[randomIndex];
+
+        setQuestion(selectedQuestion);
+        setLastQuestionId(selectedQuestion.id);
+        setIsTicking(true);
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "Error al cargar la pregunta.");
+      } finally {
+        setLoading(false);
       }
-
-      const data = await response.json();
-      setQuestion(data);
-      setLastQuestionId(data.id);
-    } catch (err: any) {
-      console.error(err);
-      setError("No se pudo conectar con el Atlas Mágico. Inténtalo de nuevo.");
-    } finally {
-      setLoading(false);
-    }
+    }, 600);
   };
 
   useEffect(() => {
