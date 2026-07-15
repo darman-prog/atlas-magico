@@ -28,6 +28,7 @@ export default function QuizScreen({
   const [showExplanation, setShowExplanation] = useState<boolean>(false);
   const [answeredCorrectly, setAnsweredCorrectly] = useState<boolean | null>(null);
   const [isTicking, setIsTicking] = useState<boolean>(true);
+  const [lastQuestionId, setLastQuestionId] = useState<string | undefined>(undefined);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -48,7 +49,8 @@ export default function QuizScreen({
         body: JSON.stringify({
           countryId: country.id,
           levelId,
-          levelIndex
+          levelIndex,
+          lastQuestionId
         })
       });
 
@@ -58,6 +60,7 @@ export default function QuizScreen({
 
       const data = await response.json();
       setQuestion(data);
+      setLastQuestionId(data.id);
     } catch (err: any) {
       console.error(err);
       setError("No se pudo conectar con el Atlas Mágico. Inténtalo de nuevo.");
