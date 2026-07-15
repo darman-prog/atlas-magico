@@ -1,0 +1,6 @@
+{
+  "name": "Atlas Mágico",
+  "description": "Un fascinante atlas educativo con geografía, leyendas del mundo, bestiario mitológico y trivias infinitas potenciadas por Gemini AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
