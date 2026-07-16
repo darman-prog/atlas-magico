@@ -1,6 +1,6 @@
 import { CountryData } from "./types";
 import mascotImg from "./assets/images/duck_sailor_mascot_1784150485407.jpg";
-import mapImg from "./assets/images/fantasy_world_map_1784150474859.jpg";
+import mapImg from "./assets/images/fantasy_world_map_1784150474859.png";
 import forestImg from "./assets/images/tropical_forest_level_1784150497329.jpg";
 import riverImg from "./assets/images/amazon_river_level_1784150507329.jpg";
 import mountainImg from "./assets/images/mountain_trail_level_1784150518201.jpg";
