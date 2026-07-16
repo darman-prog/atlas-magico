@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { COUNTRIES, MAP_IMAGE } from "../data";
 import { GameState } from "../types";
 import { Compass, Settings, LogOut, Play } from "lucide-react";
@@ -37,6 +38,21 @@ export default function MapScreen({
   onOpenSettings,
   onQuit
 }: MapScreenProps) {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+
+    updatePreference();
+
+    mediaQuery.addEventListener?.("change", updatePreference);
+
+    return () => {
+      mediaQuery.removeEventListener?.("change", updatePreference);
+    };
+  }, []);
+
   const generateDottedPath = () => {
     return pathPoints.map((p, index) => `${index === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
   };
@@ -47,9 +63,27 @@ export default function MapScreen({
   };
 
   return (
-    <div
-      id="fantasy-container"
-      className="w-full max-w-7xl mx-auto min-h-[92svh] lg:h-[92vh] flex flex-col justify-between gap-4 p-3 sm:p-4 bg-[#e3d9c3] rounded-2xl sm:rounded-3xl border-[6px] sm:border-8 border-[#7d562d] relative shadow-2xl overflow-y-auto lg:overflow-hidden"
+    <div>
+      <style>{`
+        @keyframes map-float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-8px) rotate(1.5deg); }
+        }
+
+        .map-float {
+          animation: map-float 7s ease-in-out infinite;
+          transform-origin: center center;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .map-float {
+            animation: none;
+          }
+        }
+      `}</style>
+      <div
+        id="fantasy-container"
+        className="w-full max-w-7xl mx-auto min-h-[92svh] lg:h-[92vh] flex flex-col justify-between gap-4 p-3 sm:p-4 bg-[#e3d9c3] rounded-2xl sm:rounded-3xl border-[6px] sm:border-8 border-[#7d562d] relative shadow-2xl overflow-y-auto lg:overflow-hidden"
       style={{
         backgroundImage: "radial-gradient(#fff8ef 10%, transparent 10%), radial-gradient(#fff8ef 10%, transparent 10%)",
         backgroundSize: "20px 20px",
@@ -89,96 +123,99 @@ export default function MapScreen({
             boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 40px rgba(0,0,0,0.4)"
           }}
         >
-          <img
-            src={MAP_IMAGE}
-            alt="Mapa fantástico del mundo"
-            className="absolute inset-0 w-full h-full object-cover opacity-80 select-none pointer-events-none"
-            referrerPolicy="no-referrer"
-          />
+          <div className={`${prefersReducedMotion ? "" : "map-float"} absolute inset-0 w-full h-full`}>
+              <img
+                src={MAP_IMAGE}
+                alt="Mapa fantástico del mundo"
+                className="absolute inset-0 w-full h-full object-cover opacity-80 select-none pointer-events-none"
+                referrerPolicy="no-referrer"
+              />
 
-          <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-            <path
-              d={generateDottedPath()}
-              fill="none"
-              stroke="#ece2cb"
-              strokeWidth="1.2"
-              strokeDasharray="2, 2"
-              className="opacity-90"
-            />
-            <path
-              d={generateDottedPath()}
-              fill="none"
-              stroke="#ffca98"
-              strokeWidth="0.8"
-              strokeDasharray="2, 2"
-              className="opacity-70"
-            />
-          </svg>
+              <svg className="absolute inset-0 w-full h-full pointer-events-none z-10" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <path
+                  d={generateDottedPath()}
+                  fill="none"
+                  stroke="#ece2cb"
+                  strokeWidth="1.2"
+                  strokeDasharray="2, 2"
+                  className="opacity-90"
+                />
+                <path
+                  d={generateDottedPath()}
+                  fill="none"
+                  stroke="#ffca98"
+                  strokeWidth="0.8"
+                  strokeDasharray="2, 2"
+                  className="opacity-70"
+                />
+              </svg>
 
-          <div className="absolute inset-0 bg-[#e3d9c3]/15 pointer-events-none mix-blend-multiply z-20" />
+              <div className="absolute inset-0 bg-[#e3d9c3]/15 pointer-events-none mix-blend-multiply z-20" />
 
-          {/* MAP TITLE HEADING */}
-          <div className="absolute top-[8%] left-1/2 -translate-x-1/2 bg-[#fff8ef]/95 border-2 border-[#7d562d] rounded-lg px-3 sm:px-4 py-1.5 shadow-md z-30 text-center max-w-[82%]">
-            <h1 className="font-sans text-[10px] md:text-sm font-extrabold text-[#7d562d] tracking-wide uppercase leading-tight">
-              Página Principal - Atlas Mágico
-            </h1>
-            <p className="font-sans text-[9px] md:text-xs text-[#0f5238] font-medium italic leading-tight">
-              Explora el Mundo de Aethelgard
-            </p>
-          </div>
+              {/* MAP TITLE HEADING */}
+              <div className="absolute top-[8%] left-1/2 -translate-x-1/2 bg-[#fff8ef]/95 border-2 border-[#7d562d] rounded-lg px-3 sm:px-4 py-1.5 shadow-md z-30 text-center max-w-[82%]">
+                <h1 className="font-sans text-[10px] md:text-sm font-extrabold text-[#7d562d] tracking-wide uppercase leading-tight">
+                  Página Principal - Atlas Mágico
+                </h1>
+                <p className="font-sans text-[9px] md:text-xs text-[#0f5238] font-medium italic leading-tight">
+                  Explora el Mundo de Aethelgard
+                </p>
+              </div>
 
-          {/* CENTRAL ATLAS CARD */}
-          <div
-            style={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
-            className="absolute bg-[#fff8ef] border-2 border-[#7d562d] p-2 sm:p-3 rounded-xl shadow-lg z-30 text-center w-20 sm:w-24 md:w-28 cursor-default pointer-events-none"
-          >
-            <p className="font-sans text-[9px] sm:text-[10px] font-bold text-[#7d562d] tracking-widest uppercase">ATLAS</p>
-            <p className="font-sans text-[10px] sm:text-[11px] font-extrabold text-[#31486b] uppercase leading-tight">MÁGICO</p>
-            <div className="text-base md:text-xl mt-1 text-[#ffca98]" aria-hidden="true">⛵</div>
-          </div>
-
-          {/* FLOATING COUNTRY MARKERS */}
-          {COUNTRIES.map((country) => {
-            const isUnlocked = gameState.unlockedCountries.includes(country.id);
-
-            return (
-              <button
-                key={country.id}
-                onClick={() => onSelectCountry(country.id)}
-                aria-disabled={!isUnlocked}
-                aria-label={`${country.name}, nivel ${countryLevelLabels[country.id] ?? country.levelRequired}`}
-                style={{ left: `${country.coordinates.x}%`, top: `${country.coordinates.y}%` }}
-                className={`absolute z-30 -translate-x-1/2 -translate-y-1/2 p-1.5 sm:p-2 bg-[#fff8ef] hover:bg-[#fdf3db] border-2 border-[#7d562d] rounded-xl shadow-md flex flex-col items-center justify-center transition-all duration-300 group max-w-[5.75rem] sm:max-w-[6.5rem] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#31486b] ${
-                  isUnlocked
-                    ? "hover:scale-110 active:scale-95 border-[#7d562d] cursor-pointer"
-                    : "opacity-60 grayscale border-dashed border-[#bfc9c1] cursor-not-allowed"
-                }`}
+              {/* CENTRAL ATLAS CARD */}
+              <div
+                style={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
+                className="absolute bg-[#fff8ef] border-2 border-[#7d562d] p-2 sm:p-3 rounded-xl shadow-lg z-30 text-center w-20 sm:w-24 md:w-28 cursor-default pointer-events-none"
               >
-                <div className="flex items-center gap-1 mb-0.5 max-w-full">
-                  <span className="text-xs md:text-sm shrink-0" aria-hidden="true">{country.flag}</span>
-                  <span className="font-sans font-extrabold text-[8px] md:text-[10px] text-[#201b0d] tracking-tight group-hover:text-[#0f5238] truncate min-w-0">
-                    {country.name}
-                  </span>
-                </div>
+                <p className="font-sans text-[9px] sm:text-[10px] font-bold text-[#7d562d] tracking-widest uppercase">ATLAS</p>
+                <p className="font-sans text-[10px] sm:text-[11px] font-extrabold text-[#31486b] uppercase leading-tight">MÁGICO</p>
+                <div className="text-base md:text-xl mt-1 text-[#ffca98]" aria-hidden="true">⛵</div>
+              </div>
 
-                <span className="font-mono text-[7px] md:text-[8px] text-[#7d562d] font-bold uppercase leading-none whitespace-nowrap">
-                  (Nivel {countryLevelLabels[country.id] ?? country.levelRequired})
-                </span>
+              {/* FLOATING COUNTRY MARKERS */}
+              {COUNTRIES.map((country) => {
+                const isUnlocked = gameState.unlockedCountries.includes(country.id);
 
-                <div className="flex items-center gap-0.5 mt-0.5" aria-hidden="true">
-                  <span className="text-[7px] md:text-[8px] text-[#ffca98]">☆</span>
-                  <span className="text-[7px] md:text-[8px] text-[#ffca98]">☆</span>
-                  <span className="text-[7px] md:text-[8px] text-[#ffca98]">☆</span>
-                </div>
+                return (
+                  <button
+                    key={country.id}
+                    onClick={() => onSelectCountry(country.id)}
+                    aria-disabled={!isUnlocked}
+                    aria-label={`${country.name}, nivel ${countryLevelLabels[country.id] ?? country.levelRequired}`}
+                    style={{ left: `${country.coordinates.x}%`, top: `${country.coordinates.y}%` }}
+                    className={`absolute z-30 -translate-x-1/2 -translate-y-1/2 p-1.5 sm:p-2 bg-[#fff8ef] hover:bg-[#fdf3db] border-2 border-[#7d562d] rounded-xl shadow-md flex flex-col items-center justify-center transition-all duration-300 group max-w-[5.75rem] sm:max-w-[6.5rem] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#31486b] ${
+                      isUnlocked
+                        ? "hover:scale-110 active:scale-95 border-[#7d562d] cursor-pointer"
+                        : "opacity-60 grayscale border-dashed border-[#bfc9c1] cursor-not-allowed"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1 mb-0.5 max-w-full">
+                      <span className="text-xs md:text-sm shrink-0" aria-hidden="true">{country.flag}</span>
+                      <span className="font-sans font-extrabold text-[8px] md:text-[10px] text-[#201b0d] tracking-tight group-hover:text-[#0f5238] truncate min-w-0">
+                        {country.name}
+                      </span>
+                    </div>
 
-                {!isUnlocked && (
-                  <div className="absolute inset-0 bg-black/5 rounded-xl flex items-center justify-center">
-                    <span className="text-[9px] font-bold text-[#ba1a1a]" aria-hidden="true">🔒</span>
-                  </div>
-                )}
-              </button>
-            );
-          })}
+                    <span className="font-mono text-[7px] md:text-[8px] text-[#7d562d] font-bold uppercase leading-none whitespace-nowrap">
+                      (Nivel {countryLevelLabels[country.id] ?? country.levelRequired})
+                    </span>
+
+                    <div className="flex items-center gap-0.5 mt-0.5" aria-hidden="true">
+                      <span className="text-[7px] md:text-[8px] text-[#ffca98]">☆</span>
+                      <span className="text-[7px] md:text-[8px] text-[#ffca98]">☆</span>
+                      <span className="text-[7px] md:text-[8px] text-[#ffca98]">☆</span>
+                    </div>
+
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 bg-black/5 rounded-xl flex items-center justify-center">
+                        <span className="text-[9px] font-bold text-[#ba1a1a]" aria-hidden="true">🔒</span>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -222,5 +259,5 @@ export default function MapScreen({
         </button>
       </div>
     </div>
-  );
+  )
 }
