@@ -1,23 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { COUNTRIES as INITIAL_COUNTRIES } from "./data";
 import { CountryData, GameState, LevelData } from "./types";
 import MapScreen from "./components/MapScreen";
 import LevelsScreen from "./components/LevelsScreen";
 import QuizScreen from "./components/QuizScreen";
 import SettingsModal from "./components/SettingsModal";
-import { Trophy, Star, Shield, HelpCircle, Volume2, Sparkles } from "lucide-react";
 
 export default function App() {
-  // Let's copy initial countries data with populated stars to match the exact screenshots!
   const getPrePopulatedCountries = (): CountryData[] => {
     return INITIAL_COUNTRIES.map((country) => {
       if (country.id === "brasil") {
         return {
           ...country,
           levels: country.levels.map((level, idx) => {
-            if (idx === 0) return { ...level, starsEarned: 2, status: "completed" }; // Fácil with 2 stars
-            if (idx === 1) return { ...level, starsEarned: 2, status: "completed" }; // Medio with 2 stars
-            return level; // Difícil remains locked/empty (0 stars)
+            if (idx === 0) return { ...level, starsEarned: 2, status: "completed" };
+            if (idx === 1) return { ...level, starsEarned: 2, status: "completed" };
+            return level;
           }),
         };
       }
@@ -27,8 +25,8 @@ export default function App() {
 
   const [countries, setCountries] = useState<CountryData[]>(getPrePopulatedCountries);
   const [gameState, setGameState] = useState<GameState>({
-    points: 820, // Pre-populated to match Image 2 screenshot exactly (820 pts)
-    stars: 4,    // Pre-populated to match Image 2 screenshot exactly (4 stars)
+    points: 820,
+    stars: 4,
     activeCountryId: null,
     activeLevelId: null,
     currentScreen: "map",
@@ -39,22 +37,14 @@ export default function App() {
 
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [activeLevelIndex, setActiveLevelIndex] = useState<number>(1);
-  const [backgroundMusic, setBackgroundMusic] = useState<HTMLAudioElement | null>(null);
-
-  // Play background music if the volume is up (synthesized synth pads or gentle music loop)
-  useEffect(() => {
-    // We can lazily play a gentle ambient ocean sound/music using synthesized oscillators!
-    // Since audio must be explicitly interacted with first, we will start sound on user interaction
-  }, []);
 
   const handleSelectCountry = (countryId: string) => {
     const country = countries.find(c => c.id === countryId);
     if (!country) return;
 
-    // Check unlock status
     const isUnlocked = gameState.unlockedCountries.includes(countryId);
     if (!isUnlocked) {
-      alert(`⚠️ Este país está custodiado por misterios antiguos. ¡Supera los niveles anteriores para desbloquear!`);
+      alert("Este país está custodiado por misterios antiguos. ¡Supera los niveles anteriores para desbloquear!");
       return;
     }
 
@@ -75,7 +65,6 @@ export default function App() {
   };
 
   const handleQuizComplete = (starsEarned: number, pointsEarned: number) => {
-    // Update dynamic countries level stars if better than before
     const updatedCountries = countries.map((country) => {
       if (country.id === gameState.activeCountryId) {
         return {
@@ -84,10 +73,11 @@ export default function App() {
             if (level.id === gameState.activeLevelId) {
               const prevStars = level.starsEarned;
               const finalStars = Math.max(prevStars, starsEarned);
+              const status: LevelData["status"] = finalStars > 0 ? "completed" : "unlocked";
               return {
                 ...level,
                 starsEarned: finalStars,
-                status: finalStars > 0 ? "completed" : "unlocked" as any,
+                status,
               };
             }
             return level;
@@ -99,7 +89,6 @@ export default function App() {
 
     setCountries(updatedCountries);
 
-    // Recalculate total points & stars
     const newTotalStars = updatedCountries.reduce((total, c) => {
       return total + c.levels.reduce((acc, l) => acc + l.starsEarned, 0);
     }, 0);
@@ -108,14 +97,13 @@ export default function App() {
       ...prev,
       points: prev.points + pointsEarned,
       stars: newTotalStars,
-      currentScreen: "levels", // Return to level selection
+      currentScreen: "levels",
     }));
 
-    // Trigger congratulations alert / toast
     if (starsEarned > 0) {
-      alert(`🎉 ¡Excelente! Ganaste ${starsEarned} ⭐ y +${pointsEarned} Puntos para tu Atlas.`);
+      alert(`¡Excelente! Ganaste ${starsEarned} ★ y +${pointsEarned} Puntos para tu Atlas.`);
     } else {
-      alert(`🧭 Aprendizaje completado. +${pointsEarned} Puntos sumados a tu bitácora.`);
+      alert(`Aprendizaje completado. +${pointsEarned} Puntos sumados a tu bitácora.`);
     }
   };
 
@@ -131,12 +119,10 @@ export default function App() {
     }));
   };
 
-  // Find active structures
   const activeCountry = countries.find(c => c.id === gameState.activeCountryId) || countries[0];
 
   return (
-    <div className="min-h-screen w-full bg-[#353021] flex items-center justify-center p-2 sm:p-4 selection:bg-[#ffca98] selection:text-[#2c1600]">
-      {/* Dynamic Screen Router */}
+    <div className="min-h-screen w-full bg-[#353021] flex items-center justify-center p-2 sm:p-4 overflow-x-hidden selection:bg-[#ffca98] selection:text-[#2c1600]">
       {gameState.currentScreen === "map" && (
         <MapScreen
           gameState={gameState}
@@ -171,7 +157,6 @@ export default function App() {
         />
       )}
 
-      {/* Global Settings Drawer / Modal */}
       <SettingsModal
         isOpen={settingsOpen}
         onClose={() => setSettingsOpen(false)}
