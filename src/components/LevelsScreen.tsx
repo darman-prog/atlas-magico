@@ -110,7 +110,7 @@ export default function LevelsScreen({
       </div>
 
       {/* LEVEL CARDS CONTAINER */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 px-0 sm:px-4 z-10 my-2 max-w-5xl mx-auto w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 lg:gap-6 px-0 sm:px-4 z-10 my-2 max-w-5xl mx-auto w-full">
         {country.levels.slice(0, 3).map((level, index) => {
           const style = levelStyles[index];
 

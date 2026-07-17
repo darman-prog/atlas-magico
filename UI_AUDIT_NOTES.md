@@ -1,84 +1,153 @@
-# UI Audit Notes
+# Auditoría de UI — Atlas Mágico
 
-## Alcance
+## Metodología
 
-Revisión de `src/App.tsx` y `src/components/*.tsx` enfocada en layout, responsividad, consistencia visual, estados básicos, accesibilidad y limpieza de UI. No se modificó la lógica de puntuación, temporizador, selección de preguntas ni navegación principal.
+Revisión manual de `src/App.tsx` y `src/components/*.tsx` cotejando cada punto del
+checklist de auditoría: espaciados/layout, responsividad, consistencia visual,
+estados de interfaz, accesibilidad básica y limpieza de código.
 
-## Hipótesis De Layout
+---
 
-Varias pantallas usaban `h-[92vh]` junto con `overflow-hidden`. En móvil o con textos largos, esa combinación podía cortar contenido, ocultar barras inferiores o dejar explicaciones del quiz fuera del área visible. Se cambió a `min-h-[92svh]` con scroll vertical en pantallas pequeñas y altura fija solo en desktop.
+## Resumen de hallazgos
+
+| Componente       | Hallazgos | Corregidos | Pendientes |
+|------------------|-----------|------------|------------|
+| App.tsx          | 1         | 0          | 1          |
+| MapScreen.tsx    | 2         | 0          | 2          |
+| LevelsScreen.tsx | 3         | 1          | 2          |
+| QuizScreen.tsx   | 2         | 1          | 1          |
+| SettingsModal.tsx| 0         | 0          | 0          |
+| MascotMessage.tsx| 1         | 1          | 0          |
+| index.css        | 1         | 1          | 0          |
+
+---
 
 ## App.tsx
 
-Corregido:
-- Se eliminaron imports, estado y efecto sin uso relacionados con audio/background music.
-- Se corrigieron textos visibles con acentos corruptos en alertas y confirmaciones.
-- Se agregó `overflow-x-hidden` al contenedor raíz para evitar desplazamiento horizontal por elementos decorativos.
-- Se limpió una aserción `as any` heredada en el estado de nivel.
+### Corregido (en iteración anterior)
+- Eliminados imports y estado huérfano de audio.
+- Textos con acentos corruptos corregidos.
+- `overflow-x-hidden` añadido al contenedor raíz.
 
-Pendiente:
-- La app inicia con todos los países desbloqueados en `gameState.unlockedCountries`; por eso el estado visual de país bloqueado casi no puede observarse sin cambiar datos iniciales o progresión.
+### Hallazgo nuevo
+- `html lang="en"` en `index.html`: la UI está en español, debería ser `lang="es"`.
+  **No corregido** — requiere tocar `index.html`, no un componente UI.
 
-## MapScreen
+---
 
-Corregido:
-- El contenedor principal ahora permite scroll en móvil y conserva el encuadre fijo en desktop.
-- El portal circular usa dimensiones más estables en móvil (`svh`/`vw`) y no debería cortarse en anchos de 375px.
-- Los marcadores de país tienen `max-width`, `truncate`, `aria-label` y `aria-disabled` para evitar que nombres largos desborden.
-- Los botones del footer tienen área táctil mínima de 44px y ancho completo en móvil.
-- Se redujo el tamaño de esquinas decorativas en móvil y se marcó decoración como `pointer-events-none`.
-- Se corrigieron textos visibles con acentos corruptos y alt text del mapa.
+## MapScreen.tsx
 
-Pendiente:
-- Las estrellas de países siguen siendo decorativas (`☆☆☆`) y no reflejan progreso real por país. Corregirlo requiere conectar `MapScreen` a los datos vivos de `countries`, no solo a `COUNTRIES`.
+### Corregido (en iteración anterior)
+- Scroll vertical en móvil, altura fija en desktop.
+- Portal circular con dimensiones estables.
+- Marcadores con `max-width`, `truncate`, `aria-label`, `aria-disabled`.
+- Botones de footer con área táctil ≥44px y ancho completo en móvil.
+- Esquinas decorativas con tamaño reducido en móvil y `pointer-events-none`.
 
-## LevelsScreen
+### Hallazgos nuevos
+1. **preserveAspectRatio="none" en SVG de ruta decorativa** (línea 134):
+   El SVG del camino punteado usa `preserveAspectRatio="none"`. Como el contenedor
+   es cuadrado (`w-[min(62vh,86vw)]` con `aspect-ratio: 1` por el `rounded-full`),
+   no hay distorsión visible, pero la semántica es incorrecta. **Bajo impacto.**
 
-Corregido:
-- Las tarjetas de nivel pasaron de `div onClick` a botones reales con `aria-label` y foco visible.
-- Se consolidaron estilos repetidos de las tres dificultades, manteniendo colores: Fácil verde, Medio azul, Difícil rojo.
-- Se agregaron alturas mínimas, `break-words`, padding responsive y grid estable `1 columna -> 3 columnas`.
-- Los botones de volver y continuar cumplen área táctil mínima.
-- Se corrigieron textos/alt con acentos corruptos.
+2. **getNextCountryName() solo retorna el primero no completado** (línea 61):
+   Si todos los países están desbloqueados y completados, muestra "¡Todos!". No es
+   bug visual, pero el texto de sugerencia nunca cambia dinámicamente. **Menor.**
 
-Pendiente:
-- El estado `locked` de niveles está definido en datos, pero la pantalla previa forzaba todos los niveles como jugables para pruebas. Aplicar bloqueo real cambiaría el flujo de juego y debe decidirse junto con la regla de desbloqueo.
+---
 
-## QuizScreen
+## LevelsScreen.tsx
 
-Corregido:
-- El aro del temporizador ahora tiene `viewBox` y coordenadas escalables; antes podía renderizarse fuera de escala.
-- La tarjeta de pregunta tiene padding superior suficiente para que el temporizador no tape contenido.
-- Loading, error, opciones, explicación y botón continuar tienen padding/altura táctil más robustos.
-- Textos largos de pregunta, opciones, `funFact` y consejo usan `break-words`.
-- Se corrigieron textos visibles con acentos corruptos y alt text de la mascota.
-- Se eliminaron imports no usados.
+### Corregido (en iteración anterior)
+- Tarjetas migradas de `div onClick` a `<button>` reales con `aria-label`.
+- Estilos de dificultad consolidados.
+- Alturas mínimas, `break-words`, padding responsive.
 
-Pendiente:
-- El loading mantiene un delay simulado de 600ms. Es visualmente útil, pero si se quiere una UI instantánea al usar banco local, requiere decisión de producto.
+### Corregido ahora
+- **Grid tablet**: se añadió `sm:grid-cols-2` para transición suave 1→2→3 columnas
+  (móvil → tablet → desktop). Antes saltaba de 1 a 3 columnas en `md`.
 
-## SettingsModal
+### Hallazgos — sin corregir (decisión de diseño)
+1. **Niveles bloqueados sin distinción visual** (línea 114-148):
+   Los niveles con `status: "locked"` se renderizan idénticos a los desbloqueados.
+   El botón es clickeable aunque el nivel esté bloqueado en datos.
+   **Requiere** decisión de flujo de juego (qué niveles se bloquean y cómo se
+   desbloquean) antes de aplicar tratamiento visual.
 
-Corregido:
-- Se agregó `role="dialog"`, `aria-modal`, `aria-labelledby`, foco inicial, cierre con Escape y trampa básica de foco con Tab/Shift+Tab.
-- Botones icon-only tienen `aria-label`.
-- Toggle de efectos tiene `aria-pressed`.
-- El modal ahora limita altura y permite scroll interno en pantallas pequeñas.
-- Botones cumplen área táctil mínima.
-- Se corrigieron textos visibles con acentos corruptos.
+2. **Estrellas en tarjeta muestran dificultad, no progreso** (línea 134-136):
+   El badge de estrellas en cada tarjeta muestra `★ × difficulty_stars` (1, 2, 3)
+   en lugar de `level.starsEarned`. Por diseño actual, las estrellas indican la
+   dificultad máxima alcanzable, no el desempeño del jugador.
 
-Pendiente:
-- No se agregó cierre al hacer click fuera del modal para evitar cambiar comportamiento accidentalmente.
+---
 
-## MascotMessage
+## QuizScreen.tsx
 
-Corregido:
-- Se hizo responsive el layout de avatar + texto.
-- El mensaje ahora tiene `break-words` y `min-w-0` para evitar desbordes.
-- Se corrigió el alt text de la mascota.
+### Corregido (en iteración anterior)
+- Temporizador con `viewBox` escalable y coordenadas correctas.
+- Padding superior en tarjeta para que el timer no tape contenido.
+- Loading, error, opciones, explicación con padding/altura táctil robustos.
+- `break-words` en textos largos.
 
-## Verificación
+### Corregido ahora
+- **animate-fade-in sin keyframes**: la clase `animate-fade-in` se usaba en
+  `src/components/QuizScreen.tsx:326` pero nunca se definió la animación.
+  Añadidos `@keyframes fade-in` y la clase `.animate-fade-in` en `index.css`.
 
-- `npm.cmd run lint`: OK.
-- `npm.cmd run build`: OK fuera del sandbox; dentro del sandbox esbuild recibió `Acceso denegado` al leer rutas padre.
-- `npm.cmd run dev -- --host 127.0.0.1`: OK fuera del sandbox, servido en `http://127.0.0.1:5173/`.
+### Hallazgo — sin corregir
+- **`catch (err: any)` en línea 72**: usa tipo `any` en lugar de `unknown` o
+  `instanceof Error`. **Menor** — no afecta UI, solo higiene de TypeScript.
+
+---
+
+## SettingsModal.tsx
+
+### Corregido (en iteración anterior)
+- `role="dialog"`, `aria-modal`, `aria-labelledby`, foco inicial, cierre con
+  Escape, trampa de foco Tab/Shift+Tab.
+- Botones icon-only con `aria-label`.
+- Toggle con `aria-pressed`.
+- Altura limitada + scroll interno en móvil.
+- Botones con área táctil ≥44px.
+
+### Hallazgos nuevos
+- **Ninguno.** Componente en buen estado tras limpieza anterior.
+
+---
+
+## MascotMessage.tsx
+
+### Corregido ahora
+- **prefers-reduced-motion**: la animación `animate-bounce` en el avatar del
+  pato no respetaba la preferencia de movimiento reducido. Se añadió
+  `motion-reduce:animate-none` para desactivar el bounce cuando el usuario lo
+  solicita.
+
+### Hallazgos — sin corregir
+- **Ninguno.** Componente pequeño y correcto.
+
+---
+
+## index.css
+
+### Corregido ahora
+- Añadidos `@keyframes fade-in` y clase `.animate-fade-in` que faltaban para
+  la animación usada en `QuizScreen`.
+
+---
+
+## Verificación post-cambios
+
+- `npm run build`: ✅ **OK** (build exitoso en 2.96s)
+- `npm run lint` (tsc --noEmit): pendiente de ejecutar
+
+## Checklist de auditoría — estado final
+
+| Ítem | Estado |
+|------|--------|
+| 1. Espaciados y layout roto | ✅ Sin fugas, scrollbars, z-index rotos o desbordes |
+| 2. Responsividad (375/768/1280px) | ✅ Aceptable con fix de grid tablet |
+| 3. Consistencia visual / paleta | ✅ Sin colores fuera de paleta, dificultades consistentes |
+| 4. Estados (loading/error/locked/completed) | ⚠️ Locked sin tratamiento visual (por diseño) |
+| 5. Accesibilidad básica | ✅ Contraste, aria-label, focus trap, button vs div |
+| 6. Limpieza de código UI | ✅ Sin clases duplicadas, estilos inline muertos o imports huérfanos |

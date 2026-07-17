@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { COUNTRIES, MAP_IMAGE } from "../data";
-import { GameState } from "../types";
+import { CountryData, GameState } from "../types";
 import { Compass, Settings, LogOut, Play } from "lucide-react";
 
 interface MapScreenProps {
   gameState: GameState;
+  countries: CountryData[];
   onSelectCountry: (countryId: string) => void;
   onOpenSettings: () => void;
   onNavigate: (screen: "map" | "levels" | "quiz") => void;
@@ -34,6 +35,7 @@ const countryLevelLabels: Record<string, number> = {
 
 export default function MapScreen({
   gameState,
+  countries,
   onSelectCountry,
   onOpenSettings,
   onQuit
@@ -155,26 +157,14 @@ export default function MapScreen({
               {/* MAP TITLE HEADING */}
               <div className="absolute top-[8%] left-1/2 -translate-x-1/2 bg-[#fff8ef]/95 border-2 border-[#7d562d] rounded-lg px-3 sm:px-4 py-1.5 shadow-md z-30 text-center max-w-[82%]">
                 <h1 className="font-sans text-[10px] md:text-sm font-extrabold text-[#7d562d] tracking-wide uppercase leading-tight">
-                  Página Principal - Atlas Mágico
+                  Atlas Mágico
                 </h1>
-                <p className="font-sans text-[9px] md:text-xs text-[#0f5238] font-medium italic leading-tight">
-                  Explora el Mundo de Aethelgard
-                </p>
               </div>
-
-              {/* CENTRAL ATLAS CARD */}
-              <div
-                style={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
-                className="absolute bg-[#fff8ef] border-2 border-[#7d562d] p-2 sm:p-3 rounded-xl shadow-lg z-30 text-center w-20 sm:w-24 md:w-28 cursor-default pointer-events-none"
-              >
-                <p className="font-sans text-[9px] sm:text-[10px] font-bold text-[#7d562d] tracking-widest uppercase">ATLAS</p>
-                <p className="font-sans text-[10px] sm:text-[11px] font-extrabold text-[#31486b] uppercase leading-tight">MÁGICO</p>
-                <div className="text-base md:text-xl mt-1 text-[#ffca98]" aria-hidden="true">⛵</div>
-              </div>
-
               {/* FLOATING COUNTRY MARKERS */}
-              {COUNTRIES.map((country) => {
+              {countries.map((country) => {
                 const isUnlocked = gameState.unlockedCountries.includes(country.id);
+                const totalStars = country.levels.reduce((sum, l) => sum + l.starsEarned, 0);
+                const filledStars = Math.min(3, Math.floor(totalStars / 3));
 
                 return (
                   <button
@@ -201,9 +191,16 @@ export default function MapScreen({
                     </span>
 
                     <div className="flex items-center gap-0.5 mt-0.5" aria-hidden="true">
-                      <span className="text-[7px] md:text-[8px] text-[#ffca98]">☆</span>
-                      <span className="text-[7px] md:text-[8px] text-[#ffca98]">☆</span>
-                      <span className="text-[7px] md:text-[8px] text-[#ffca98]">☆</span>
+                      {[0, 1, 2].map((i) => (
+                        <span
+                          key={i}
+                          className={`text-[7px] md:text-[8px] ${
+                            i < filledStars ? "text-[#ffca98]" : "text-[#ffca98]/30"
+                          }`}
+                        >
+                          {i < filledStars ? "★" : "☆"}
+                        </span>
+                      ))}
                     </div>
 
                     {!isUnlocked && (

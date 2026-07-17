@@ -12,7 +12,7 @@ export default function MascotMessage({ message, className = "" }: MascotMessage
       <div className="absolute top-1 left-1 w-2 h-2 rounded-full bg-[#707973] opacity-60 pointer-events-none" />
       <div className="absolute bottom-1 right-1 w-2 h-2 rounded-full bg-[#707973] opacity-60 pointer-events-none" />
 
-      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-[#7d562d] overflow-hidden bg-white shrink-0 shadow-md animate-bounce duration-1000">
+      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-[#7d562d] overflow-hidden bg-white shrink-0 shadow-md animate-bounce motion-reduce:animate-none duration-1000">
         <img
           src={MASCOT_IMAGE}
           alt="Capitán Patito"

@@ -126,6 +126,7 @@ export default function App() {
       {gameState.currentScreen === "map" && (
         <MapScreen
           gameState={gameState}
+          countries={countries}
           onSelectCountry={handleSelectCountry}
           onOpenSettings={() => setSettingsOpen(true)}
           onNavigate={(screen) => setGameState(prev => ({ ...prev, currentScreen: screen }))}
